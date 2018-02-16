@@ -4,16 +4,21 @@
 #include "real.h"
 #include <streambuf>
 
+typedef struct {
+  float prob;
+  char* label;
+} tag;
+
 extern "C" {
 
-struct membuf : std::streambuf
-{
-    membuf(char* begin, char* end) {
-        this->setg(begin, begin, end);
-    }
+struct membuf : std::streambuf {
+  membuf(char* begin, char* end) {
+    this->setg(begin, begin, end);
+  }
 };
 
 fasttext::FastText g_fasttext_model;
+
 bool g_fasttext_initialized = false;
 
 void load_model(char *path) {
@@ -23,19 +28,25 @@ void load_model(char *path) {
   }
 }
 
-int predict(char *query, float *prob, char *buf, int buf_sz) {
+void predict(char *query, int k, float* prob, char** bufs, int buf_sz) {
+
   membuf sbuf(query, query + strlen(query));
   std::istream in(&sbuf);
 
   std::vector<std::pair<fasttext::real, std::string>> predictions;
 
-  g_fasttext_model.predict(in, 1, predictions);
+  g_fasttext_model.predict(in, k, predictions);
 
   for (auto it = predictions.cbegin(); it != predictions.cend(); it++) {
-    *prob = (float)it->first;
-    strncpy(buf, it->second.c_str(), buf_sz);
+    *prob++ = (float)it->first;
+    if (it->second.length() > buf_sz) {
+      strncpy(*bufs, it->second.c_str(), buf_sz-1);
+    } else {
+      strncpy(*bufs, it->second.c_str(), it->second.length());
+    }
+    bufs++;
   }
-  return 0;
+
 }
 
 }

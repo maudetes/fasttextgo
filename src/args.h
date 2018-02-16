@@ -7,23 +7,27 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-#ifndef FASTTEXT_ARGS_H
-#define FASTTEXT_ARGS_H
+#pragma once
 
 #include <istream>
 #include <ostream>
 #include <string>
+#include <vector>
 
 namespace fasttext {
 
-enum class model_name : int {cbow=1, sg, sup};
-enum class loss_name : int {hs=1, ns, softmax};
+enum class model_name : int { cbow = 1, sg, sup };
+enum class loss_name : int { hs = 1, ns, softmax };
 
 class Args {
+  protected:
+    std::string lossToString(loss_name) const;
+    std::string boolToString(bool) const;
+    std::string modelToString(model_name) const;
+
   public:
     Args();
     std::string input;
-    std::string test;
     std::string output;
     double lr;
     int lrUpdateRate;
@@ -44,13 +48,22 @@ class Args {
     std::string label;
     int verbose;
     std::string pretrainedVectors;
+    bool saveOutput;
 
-    void parseArgs(int, char**);
+    bool qout;
+    bool retrain;
+    bool qnorm;
+    size_t cutoff;
+    size_t dsub;
+
+    void parseArgs(const std::vector<std::string>& args);
     void printHelp();
+    void printBasicHelp();
+    void printDictionaryHelp();
+    void printTrainingHelp();
+    void printQuantizationHelp();
     void save(std::ostream&);
     void load(std::istream&);
+    void dump(std::ostream&) const;
 };
-
 }
-
-#endif

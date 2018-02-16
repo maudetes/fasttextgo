@@ -7,8 +7,7 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-#ifndef FASTTEXT_MODEL_H
-#define FASTTEXT_MODEL_H
+#pragma once
 
 #include <vector>
 #include <random>
@@ -18,11 +17,8 @@
 #include "args.h"
 #include "matrix.h"
 #include "vector.h"
+#include "qmatrix.h"
 #include "real.h"
-
-#define SIGMOID_TABLE_SIZE 512
-#define MAX_SIGMOID 8
-#define LOG_TABLE_SIZE 512
 
 namespace fasttext {
 
@@ -35,22 +31,23 @@ struct Node {
 };
 
 class Model {
-  private:
+  protected:
     std::shared_ptr<Matrix> wi_;
     std::shared_ptr<Matrix> wo_;
+    std::shared_ptr<QMatrix> qwi_;
+    std::shared_ptr<QMatrix> qwo_;
     std::shared_ptr<Args> args_;
     Vector hidden_;
     Vector output_;
     Vector grad_;
     int32_t hsz_;
-    int32_t isz_;
     int32_t osz_;
     real loss_;
     int64_t nexamples_;
-    real* t_sigmoid;
-    real* t_log;
+    std::vector<real> t_sigmoid_;
+    std::vector<real> t_log_;
     // used for negative sampling:
-    std::vector<int32_t> negatives;
+    std::vector<int32_t> negatives_;
     size_t negpos;
     // used for hierarchical softmax:
     std::vector< std::vector<int32_t> > paths;
@@ -69,22 +66,21 @@ class Model {
   public:
     Model(std::shared_ptr<Matrix>, std::shared_ptr<Matrix>,
           std::shared_ptr<Args>, int32_t);
-    ~Model();
 
     real binaryLogistic(int32_t, bool, real);
     real negativeSampling(int32_t, real);
     real hierarchicalSoftmax(int32_t, real);
     real softmax(int32_t, real);
 
-    void predict(const std::vector<int32_t>&, int32_t,
+    void predict(const std::vector<int32_t>&, int32_t, real,
                  std::vector<std::pair<real, int32_t>>&,
                  Vector&, Vector&) const;
-    void predict(const std::vector<int32_t>&, int32_t,
+    void predict(const std::vector<int32_t>&, int32_t, real,
                  std::vector<std::pair<real, int32_t>>&);
-    void dfs(int32_t, int32_t, real,
+    void dfs(int32_t, real, int32_t, real,
              std::vector<std::pair<real, int32_t>>&,
              Vector&) const;
-    void findKBest(int32_t, std::vector<std::pair<real, int32_t>>&,
+    void findKBest(int32_t, real, std::vector<std::pair<real, int32_t>>&,
                    Vector&, Vector&) const;
     void update(const std::vector<int32_t>&, int32_t, real);
     void computeHidden(const std::vector<int32_t>&, Vector&) const;
@@ -97,10 +93,11 @@ class Model {
     real getLoss() const;
     real sigmoid(real) const;
     real log(real) const;
+    real std_log(real) const;
 
     std::minstd_rand rng;
+    bool quant_;
+    void setQuantizePointer(std::shared_ptr<QMatrix>, std::shared_ptr<QMatrix>, bool);
 };
 
 }
-
-#endif

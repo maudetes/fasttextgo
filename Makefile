@@ -8,15 +8,18 @@
 #
 
 CXX = c++
-CXXFLAGS = -pthread -std=c++0x
-OBJS = args.o dictionary.o matrix.o vector.o model.o utils.o fasttext.o fasttext_wrapper.o
+CXXFLAGS = -pthread -std=c++0x -march=native
+OBJS = args.o dictionary.o productquantizer.o matrix.o qmatrix.o vector.o model.o utils.o fasttext.o fasttext_wrapper.o
 INCLUDES = -I.
 
 opt: CXXFLAGS += -O3 -funroll-loops
-opt: build
+opt: fasttext
 
 debug: CXXFLAGS += -g -O0 -fno-inline
 debug: fasttext
+
+fasttext_wrapper.o: src/fasttext_wrapper.cc src/fasttext.cc src/*.h
+	$(CXX) $(CXXFLAGS) -c src/fasttext_wrapper.cc
 
 args.o: src/args.cc src/args.h
 	$(CXX) $(CXXFLAGS) -c src/args.cc
@@ -24,8 +27,14 @@ args.o: src/args.cc src/args.h
 dictionary.o: src/dictionary.cc src/dictionary.h src/args.h
 	$(CXX) $(CXXFLAGS) -c src/dictionary.cc
 
+productquantizer.o: src/productquantizer.cc src/productquantizer.h src/utils.h
+	$(CXX) $(CXXFLAGS) -c src/productquantizer.cc
+
 matrix.o: src/matrix.cc src/matrix.h src/utils.h
 	$(CXX) $(CXXFLAGS) -c src/matrix.cc
+
+qmatrix.o: src/qmatrix.cc src/qmatrix.h src/utils.h
+	$(CXX) $(CXXFLAGS) -c src/qmatrix.cc
 
 vector.o: src/vector.cc src/vector.h src/utils.h
 	$(CXX) $(CXXFLAGS) -c src/vector.cc
@@ -39,9 +48,6 @@ utils.o: src/utils.cc src/utils.h
 fasttext.o: src/fasttext.cc src/*.h
 	$(CXX) $(CXXFLAGS) -c src/fasttext.cc
 
-fasttext_wrapper.o: src/fasttext_wrapper.cc src/fasttext.cc src/*.h
-	$(CXX) $(CXXFLAGS) -c src/fasttext_wrapper.cc
-
 libfasttext.a: $(OBJS)
 	$(AR) rcs libfasttext.a $(OBJS)
 
@@ -53,3 +59,7 @@ build: libfasttext.a
 
 test: build
 	go test
+
+clean:
+	rm -rf *.o libfasttext.a
+
