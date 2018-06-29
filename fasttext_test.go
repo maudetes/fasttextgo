@@ -6,13 +6,13 @@ import (
 )
 
 func TestSimple(t *testing.T) {
-	LoadModel("/Users/jason/datasets/bins/lid.176.bin")
-	tags, err := Predict("hello this is a new day and we are new man bueno", 6)
+	LoadModel("/home/estelle/go/src/github.com/cozy/cozy-stack/pkg/index/lid.176.ftz")
+	tags, err := PredictK("我是法国人", 6)
 	if err != nil {
 		panic(err)
 	}
 	for _, t := range tags {
-		fmt.Println(t.Label, t.Probability)
+		fmt.Println(t.Label, t.Prob)
 	}
 	// fmt.Println(Predict("sushi in palo alto"))
 	// fmt.Println(Predict("muy caliente"))
